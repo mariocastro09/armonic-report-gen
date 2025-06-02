@@ -1,0 +1,7 @@
+[theme]
+base = "dark"
+primaryColor = "#667eea"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#16213e"
+textColor = "#ffffff"
+# We will leave other theme options to be handled by the custom CSS for now 
