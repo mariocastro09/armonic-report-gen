@@ -7,12 +7,14 @@ import streamlit as st
 import os
 import plotly.graph_objects as go
 import plotly.io as pio
+import pytz
 
 class SessionManager:
     """Manage analysis sessions in SQLite database"""
     
     def __init__(self, db_path: str = "analysis_sessions.db"):
         self.db_path = db_path
+        self.timezone = pytz.timezone('America/Santiago')
         self.init_database()
     
     def init_database(self):
@@ -40,6 +42,51 @@ class SessionManager:
             conn.close()
         except Exception as e:
             st.error(f"Error initializing session database: {e}")
+    
+    def generate_session_name_suggestion(self, filename: str) -> str:
+        """Generate a unique session name suggestion"""
+        # Clean filename
+        clean_filename = filename.replace('.hfpdb', '').replace('.db', '').replace('.sqlite', '')
+        clean_filename = clean_filename.replace('_', ' ').replace('-', ' ')
+        
+        # Get current time in Santiago timezone
+        now = datetime.now(self.timezone)
+        timestamp = now.strftime("%Y%m%d_%H%M")
+        
+        # Create suggestion
+        suggestion = f"{clean_filename} - {timestamp}"
+        
+        # Check if name exists and make it unique
+        existing_names = self.get_existing_session_names()
+        counter = 1
+        original_suggestion = suggestion
+        
+        while suggestion in existing_names:
+            suggestion = f"{original_suggestion} ({counter})"
+            counter += 1
+        
+        return suggestion
+    
+    def get_existing_session_names(self) -> List[str]:
+        """Get all existing session names"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT session_name FROM analysis_sessions")
+            names = [row[0] for row in cursor.fetchall()]
+            
+            conn.close()
+            return names
+            
+        except Exception as e:
+            st.error(f"Error getting session names: {e}")
+            return []
+    
+    def _get_santiago_timestamp(self) -> str:
+        """Get current timestamp in Santiago timezone"""
+        now = datetime.now(self.timezone)
+        return now.strftime("%Y-%m-%d %H:%M:%S %Z")
     
     def _serialize_chart_data(self, charts_data: List[Dict]) -> str:
         """Serialize chart data with proper Plotly figure handling"""
@@ -73,12 +120,17 @@ class SessionManager:
             st.error(f"Error deserializing chart data: {e}")
             return []
     
-    def save_session(self, session_data: Dict) -> str:
-        """Save a new analysis session"""
+    def save_session(self, session_data: Dict, session_name: str = None) -> str:
+        """Save a new analysis session with custom name"""
         try:
             session_id = str(uuid.uuid4())
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
+            
+            # Use provided name or generate default
+            if not session_name:
+                filename = session_data.get('filename', 'Unknown')
+                session_name = self.generate_session_name_suggestion(filename)
             
             # Prepare chart types summary
             chart_types = {}
@@ -92,16 +144,20 @@ class SessionManager:
             # Serialize chart data properly
             charts_json = self._serialize_chart_data(session_data.get('charts_generated', []))
             
+            # Get Santiago timestamp
+            santiago_timestamp = self._get_santiago_timestamp()
+            
             cursor.execute("""
                 INSERT INTO analysis_sessions 
-                (id, session_name, original_filename, file_size, charts_count, 
+                (id, session_name, original_filename, file_size, created_at, charts_count, 
                  total_data_points, chart_types, charts_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 session_id,
-                session_data.get('session_name', f"Session {datetime.now().strftime('%Y%m%d_%H%M%S')}"),
+                session_name,
                 session_data.get('filename', 'Unknown'),
                 session_data.get('file_size', 0),
+                santiago_timestamp,
                 len(session_data.get('charts_generated', [])),
                 total_points,
                 json.dumps(chart_types),

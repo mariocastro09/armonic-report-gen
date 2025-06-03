@@ -451,21 +451,21 @@ def render_sidebar():
         
         st.markdown("""
         <div class="feature-card">
-            <h4>📈 Tipos de Análisis</h4>
+            <h4>📊 Tipos de Análisis</h4>
             <div style="margin: 0.5rem 0;">
-                <span class="info-badge">🌊 Formas de Onda</span><br>
+                <span class="info-badge">📈 Formas de Onda</span><br>
                 <small>Señales temporales y patrones</small>
             </div>
             <div style="margin: 0.5rem 0;">
-                <span class="info-badge">🔊 Espectro Hz</span><br>
+                <span class="info-badge">📊 Espectro Hz</span><br>
                 <small>Análisis de frecuencia</small>
             </div>
             <div style="margin: 0.5rem 0;">
-                <span class="info-badge">🎵 Espectro Orden</span><br>
+                <span class="info-badge">📊 Espectro Orden</span><br>
                 <small>Análisis de armónicos</small>
             </div>
             <div style="margin: 0.5rem 0;">
-                <span class="info-badge">📈 Datos Genéricos</span><br>
+                <span class="info-badge">📊 Datos Genéricos</span><br>
                 <small>Gráficos de dispersión</small>
             </div>
         </div>
@@ -495,8 +495,7 @@ def render_sidebar():
             <details>
                 <summary><strong>¿Qué archivos puedo subir?</strong></summary>
                 <p style="margin: 0.5rem 0; font-size: 0.9rem;">
-                    Cualquier base de datos SQLite con extensiones:
-                    .db, .sqlite, .sqlite3, .HA1S, .hfpdb
+                    Archivos de base de datos SQLite con extensión .hfpdb
                 </p>
             </details>
             <details>
@@ -521,26 +520,22 @@ def render_file_upload():
     st.markdown("""
     <div class="step-indicator">
         <span class="step-number">1</span>
-        <strong>Seleccionar Base de Datos SQLite</strong>
+        <strong>Seleccionar Base de Datos .hfpdb</strong>
     </div>
     """, unsafe_allow_html=True)
     
     # Add information about supported file types
     st.markdown("""
     <div style="margin-bottom: 1rem;">
-        <p>📁 <strong>Formatos de base de datos soportados:</strong></p>
-        <span class="info-badge">.db</span>
-        <span class="info-badge">.sqlite</span>
-        <span class="info-badge">.sqlite3</span>
-        <span class="info-badge">.HA1S</span>
+        <p>📁 <strong>Formato de base de datos soportado:</strong></p>
         <span class="info-badge">.hfpdb</span>
     </div>
     """, unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader(
-        "Seleccione su archivo de base de datos SQLite",
-        type=['db', 'sqlite', 'sqlite3', 'HA1S', 'hfpdb'],
-        help="Formatos soportados: .db, .sqlite, .sqlite3, .HA1S, .hfpdb (todos son bases de datos SQLite)"
+        "Seleccione su archivo de base de datos .hfpdb",
+        type=['hfpdb'],
+        help="Formato soportado: .hfpdb (base de datos SQLite especializada)"
     )
     
     if uploaded_file is not None:
@@ -694,16 +689,21 @@ def process_database(uploaded_file):
         
         # Save session automatically
         session_data = {
-            'session_name': f"Análisis {uploaded_file.name} - {time.strftime('%Y-%m-%d %H:%M')}",
             'filename': uploaded_file.name,
             'file_size': len(uploaded_file.getvalue()),
             'charts_generated': charts_data
         }
         
-        session_id = st.session_state.session_manager.save_session(session_data)
+        # Use custom session name if provided
+        custom_name = getattr(st.session_state, 'custom_session_name', None)
+        session_id = st.session_state.session_manager.save_session(session_data, custom_name)
         if session_id:
             st.session_state.current_session_id = session_id
             st.success(f"💾 Sesión guardada automáticamente (ID: {session_id[:8]}...)")
+        
+        # Clean up the custom name
+        if hasattr(st.session_state, 'custom_session_name'):
+            delattr(st.session_state, 'custom_session_name')
         
         # Final status
         progress_bar.progress(1.0)
@@ -787,8 +787,24 @@ def render_new_analysis():
         # Center the analyze button
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
+            # Session name input
+            suggested_name = st.session_state.session_manager.generate_session_name_suggestion(
+                st.session_state.uploaded_file.name
+            )
+            
+            session_name = st.text_input(
+                "📝 Nombre de la sesión (opcional)",
+                value=suggested_name,
+                help="Deja el nombre sugerido o personalízalo como prefieras",
+                key="session_name_input"
+            )
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
             if st.button("🔍 Analizar Base de Datos", type="primary", use_container_width=True):
                 st.session_state.processing_status = "processing"
+                # Store the custom session name
+                st.session_state.custom_session_name = session_name if session_name.strip() else None
                 success = process_database(st.session_state.uploaded_file)
                 if success:
                     st.session_state.processing_status = "completed"
@@ -908,7 +924,7 @@ def render_session_list():
                             session_data['filename'],
                             report_name,
                             "#ffffff",  # Default white background
-                            True       # Default to static images for PDF compatibility
+                            False       # Use interactive charts for PDF compatibility
                         )
                         if success:
                             with open(report_name, 'rb') as file:

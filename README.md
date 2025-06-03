@@ -1,60 +1,46 @@
-# 🚀 Enhanced Harmonic Spectrum Analyzer v3.0
+# 🚀 Enhanced Harmonic Spectrum Analyzer v3.1
 
 A powerful, modern web application for analyzing harmonic spectra and waveforms from SQLite databases. Built with Streamlit, featuring a complete dark theme, session management, and optimized rendering for large datasets.
 
-## ✨ What's New in v3.0
+## ✨ What's New in v3.1
 
-### 🎨 Complete Dark Theme
+### 📝 Enhanced Session Management
 
-- **No more white backgrounds!** Fully dark UI with gradient backgrounds
-- Modern glassmorphism design with backdrop blur effects
-- Enhanced visual hierarchy and improved readability
-- Dark-themed charts and reports
+- **Unique session names** with automatic suggestions based on filename and timestamp
+- **Editable session names** during creation with optional custom naming
+- **Santiago timezone support** for accurate timestamp recording
+- **Improved session persistence** with better organization
 
-### 💾 Session Management
+### 📄 PDF-Optimized Reports
 
-- **Automatic session saving** - never lose your analysis work
-- **Session history** - view and reload previous analyses
-- **SQLite-based storage** - persistent data management
-- **Easy navigation** between current and historical sessions
+- **Enhanced PDF spacing** with proper header positioning for print conversion
+- **Improved chart layout** with better margins and spacing for A4 pages
+- **Consistent theming** between main screen and session list reports
+- **Professional color schemes** optimized for printing
 
-### ⚡ Performance Optimizations
+### 🎯 Streamlined File Support
 
-- **Smart data sampling** for large datasets (5000+ points)
-- **Pagination system** for handling 300+ charts efficiently
-- **Optimized rendering** with reduced chart heights in grid view
-- **Memory management** with automatic cleanup
+- **Focused on .hfpdb format** for specialized harmonic analysis databases
+- **Simplified interface** with clear file format requirements
+- **Professional icons** replacing music/sound symbols with neutral chart icons
 
-### 🔍 Advanced Search & Filtering
+### 🔧 Technical Improvements
 
-- **Real-time search** by table name
-- **Filter by chart type** (Waveform, Spectrum Hz, Spectrum Order, Generic)
-- **Sort options** (Name, Type, Data points)
-- **Interactive pagination** with page navigation
-
-### 📊 Enhanced Chart Viewer
-
-- **Grid layout** with 2-column responsive design
-- **Chart statistics** with detailed metrics
-- **Type-specific emojis** for easy identification
-- **Expandable details** for each chart
-
-### 📄 Professional Reports
-
-- **Dark-themed HTML reports** with modern styling
-- **Interactive search and filtering** in reports
-- **Pagination** for large report navigation
-- **Responsive design** for all devices
+- **Rounded numbers** in chart displays for better readability
+- **Consistent theming** across all report generation methods
+- **Better PDF conversion** with proper page breaks and spacing
+- **Santiago timezone** integration for accurate session timestamps
 
 ## 🎯 Key Features
 
-- **📁 Multi-format Support**: `.db`, `.sqlite`, `.sqlite3`, `.HA1S`, `.hfpdb`
+- **📁 Specialized Format Support**: `.hfpdb` (SQLite-based harmonic analysis databases)
 - **📊 Chart Types**: Waveforms, Frequency Spectra, Harmonic Analysis, Generic Data
 - **🔄 Real-time Processing**: Live progress tracking with detailed status
-- **💾 Session Persistence**: Automatic saving and loading of analysis sessions
+- **💾 Advanced Session Management**: Custom naming, timezone support, and persistence
 - **🔍 Smart Navigation**: Search, filter, and paginate through large datasets
 - **📱 Responsive Design**: Works on desktop, tablet, and mobile devices
 - **⚡ High Performance**: Optimized for datasets with millions of data points
+- **📄 PDF-Ready Reports**: Optimized HTML reports for professional PDF conversion
 
 ## 🚀 Quick Start
 
@@ -97,6 +83,7 @@ streamlit run streamlit_app.py
 - **Pandas 2.0.0+**
 - **Plotly 5.17.0+**
 - **NumPy 1.24.0+**
+- **PyTZ 2023.3+** (for Santiago timezone support)
 
 ## 🏗️ Architecture
 
@@ -120,10 +107,11 @@ The application follows a modular architecture for maintainability and extensibi
 
 ### 1. **New Analysis**
 
-- 📁 Upload your SQLite database file
+- 📁 Upload your .hfpdb database file
+- 📝 Customize session name (optional)
 - 🔍 Click "Analyze Database" to process
 - 📊 View charts with real-time generation
-- 💾 Session automatically saved
+- 💾 Session automatically saved with custom name
 
 ### 2. **Session Management**
 
@@ -139,27 +127,28 @@ The application follows a modular architecture for maintainability and extensibi
 - 📄 Navigate through pages for large datasets
 - 📊 View detailed statistics for each chart
 
-### 4. **Report Generation**
+### 4. **PDF Report Generation**
 
 - 🚀 Generate professional HTML reports
+- 🎨 Choose color schemes optimized for printing
 - ⬇️ Download reports for sharing
-- 🔍 Interactive search and filtering in reports
+- 🖨️ Convert to PDF using browser print function
 - 📱 Mobile-responsive design
 
 ## 🎨 Supported Chart Types
 
 | Type                  | Description             | Visual           | Use Case                       |
 | --------------------- | ----------------------- | ---------------- | ------------------------------ |
-| **🌊 Waveform**       | Time-series line charts | Continuous lines | Temporal signal analysis       |
-| **🔊 Spectrum Hz**    | Frequency bar charts    | Vertical bars    | Frequency domain analysis      |
-| **🎵 Spectrum Order** | Harmonic bar charts     | Vertical bars    | Harmonic distortion analysis   |
-| **📈 Generic**        | Scatter plots           | Point clouds     | General X-Y data relationships |
+| **📈 Waveform**       | Time-series line charts | Continuous lines | Temporal signal analysis       |
+| **📊 Spectrum Hz**    | Frequency bar charts    | Vertical bars    | Frequency domain analysis      |
+| **📊 Spectrum Order** | Harmonic bar charts     | Vertical bars    | Harmonic distortion analysis   |
+| **📊 Generic**        | Scatter plots           | Point clouds     | General X-Y data relationships |
 
 ## 🔧 Configuration
 
 ### Database Requirements
 
-- **Format**: SQLite database files
+- **Format**: .hfpdb (SQLite-based harmonic analysis database)
 - **Required Columns**: `ValueX`, `ValueY` (numeric)
 - **Optional Columns**: Any additional metadata
 - **Table Naming**: Automatic type detection based on table names
@@ -169,6 +158,7 @@ The application follows a modular architecture for maintainability and extensibi
 - **Max Points per Chart**: 5,000 (automatically sampled)
 - **Charts per Page**: 8 (configurable in `chart_viewer.py`)
 - **Session Storage**: Local SQLite database (`analysis_sessions.db`)
+- **Timezone**: America/Santiago for session timestamps
 
 ## 🚀 Performance Features
 
@@ -233,9 +223,9 @@ The application follows a modular architecture for maintainability and extensibi
 
 **File upload fails:**
 
-- ✅ Confirm file is a valid SQLite database
+- ✅ Confirm file is a valid .hfpdb database
 - ✅ Check file size (recommended < 200MB)
-- ✅ Verify file extension is supported
+- ✅ Verify file extension is .hfpdb
 
 ## 🔮 Future Enhancements
 
@@ -266,12 +256,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Plotly** - For interactive visualization capabilities
 - **Pandas** - For powerful data manipulation
 - **NumPy** - For efficient numerical computing
+- **PyTZ** - For timezone support
 
 ---
 
 <div align="center">
 
-**🚀 Enhanced Harmonic Spectrum Analyzer v3.0**
+**🚀 Enhanced Harmonic Spectrum Analyzer v3.1**
 
 _Developed with ❤️ for electrical engineers and data analysts_
 

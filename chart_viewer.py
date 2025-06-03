@@ -140,8 +140,8 @@ class ChartViewer:
         # Chart type emojis with professional styling
         chart_type_emoji = {
             'waveform': '📈',
-            'spectrum_hz': '🔊', 
-            'spectrum_order': '🎵',
+            'spectrum_hz': '📊', 
+            'spectrum_order': '📊',
             'generic': '📊'
         }
         

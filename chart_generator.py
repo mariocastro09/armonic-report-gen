@@ -89,8 +89,11 @@ class ChartGenerator:
             if df_sorted.iloc[-1].name not in sampled_df.index:
                 sampled_df = pd.concat([sampled_df, df_sorted.iloc[[-1]]])
             
-            st.info(f"📊 Datos optimizados: {len(df):,} → {len(sampled_df):,} puntos")
-            return sampled_df.sort_values('ValueX')
+            # Ensure the result is properly sorted and clean
+            result_df = sampled_df.sort_values('ValueX').reset_index(drop=True)
+            
+            st.info(f"📊 Datos optimizados: {len(df):,} → {len(result_df):,} puntos")
+            return result_df
         
         return df
     
@@ -100,6 +103,11 @@ class ChartGenerator:
         
         # Optimize data
         df_optimized = self.optimize_data_for_plotting(df)
+        
+        # Round the data to remove decimals
+        df_optimized = df_optimized.copy()
+        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create line chart with optimizations
         fig = go.Figure()
@@ -113,12 +121,12 @@ class ChartGenerator:
                 width=1.5,
                 color='#667eea'
             ),
-            hovertemplate='<b>Tiempo:</b> %{x:.4f}s<br><b>Amplitud:</b> %{y:.4f}<extra></extra>'
+            hovertemplate='<b>Tiempo:</b> %{x:.0f}s<br><b>Amplitud:</b> %{y:.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text=f"🌊 {table_name}",
+                text=f"📈 {table_name}",
                 x=0.5,
                 font=dict(size=14, color='#ffffff')
             ),
@@ -131,6 +139,10 @@ class ChartGenerator:
             **self.dark_theme
         )
         
+        # Format axes to show integers only
+        fig.update_xaxes(tickformat='.0f')
+        fig.update_yaxes(tickformat='.0f')
+        
         return fig
     
     def create_spectrum_hz_chart(self, df: pd.DataFrame, table_name: str, height: int = None) -> go.Figure:
@@ -140,6 +152,11 @@ class ChartGenerator:
         # Sort and optimize data
         df_sorted = df.sort_values('ValueX')
         df_optimized = self.optimize_data_for_plotting(df_sorted, max_points=1000)  # Fewer points for bar charts
+        
+        # Round the data to remove decimals
+        df_optimized = df_optimized.copy()
+        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create bar chart
         fig = go.Figure()
@@ -152,12 +169,12 @@ class ChartGenerator:
                 color='#17a2b8',
                 line=dict(width=0.5, color='#138496')
             ),
-            hovertemplate='<b>Frecuencia:</b> %{x} Hz<br><b>Magnitud:</b> %{y:.4f}<extra></extra>'
+            hovertemplate='<b>Frecuencia:</b> %{x} Hz<br><b>Magnitud:</b> %{y:.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text=f"🔊 {table_name}",
+                text=f"📊 {table_name}",
                 x=0.5,
                 font=dict(size=14, color='#ffffff')
             ),
@@ -173,6 +190,9 @@ class ChartGenerator:
         
         fig.update_xaxes(type='category')
         
+        # Format y-axis to show integers only
+        fig.update_yaxes(tickformat='.0f')
+        
         return fig
     
     def create_spectrum_order_chart(self, df: pd.DataFrame, table_name: str, height: int = None) -> go.Figure:
@@ -182,6 +202,11 @@ class ChartGenerator:
         # Sort and optimize data
         df_sorted = df.sort_values('ValueX')
         df_optimized = self.optimize_data_for_plotting(df_sorted, max_points=1000)
+        
+        # Round the data to remove decimals
+        df_optimized = df_optimized.copy()
+        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create bar chart
         fig = go.Figure()
@@ -194,12 +219,12 @@ class ChartGenerator:
                 color='#28a745',
                 line=dict(width=0.5, color='#20c997')
             ),
-            hovertemplate='<b>Orden:</b> %{x}<br><b>Magnitud:</b> %{y:.4f}<extra></extra>'
+            hovertemplate='<b>Orden:</b> %{x}<br><b>Magnitud:</b> %{y:.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text=f"🎵 {table_name}",
+                text=f"📊 {table_name}",
                 x=0.5,
                 font=dict(size=14, color='#ffffff')
             ),
@@ -215,6 +240,9 @@ class ChartGenerator:
         
         fig.update_xaxes(type='category')
         
+        # Format y-axis to show integers only
+        fig.update_yaxes(tickformat='.0f')
+        
         return fig
     
     def create_generic_chart(self, df: pd.DataFrame, table_name: str, height: int = None) -> go.Figure:
@@ -223,6 +251,11 @@ class ChartGenerator:
         
         # Optimize data
         df_optimized = self.optimize_data_for_plotting(df, max_points=2000)
+        
+        # Round the data to remove decimals
+        df_optimized = df_optimized.copy()
+        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create scatter chart
         fig = go.Figure()
@@ -238,12 +271,12 @@ class ChartGenerator:
                 opacity=0.7,
                 line=dict(width=1, color='#e0a800')
             ),
-            hovertemplate='<b>X:</b> %{x:.4f}<br><b>Y:</b> %{y:.4f}<extra></extra>'
+            hovertemplate='<b>X:</b> %{x:.0f}<br><b>Y:</b> %{y:.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text=f"📈 {table_name}",
+                text=f"📊 {table_name}",
                 x=0.5,
                 font=dict(size=14, color='#ffffff')
             ),
@@ -255,6 +288,10 @@ class ChartGenerator:
             yaxis_title="Valor Y",
             **self.dark_theme
         )
+        
+        # Format axes to show integers only
+        fig.update_xaxes(tickformat='.0f')
+        fig.update_yaxes(tickformat='.0f')
         
         return fig
     

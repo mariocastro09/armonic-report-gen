@@ -411,15 +411,23 @@ class ReportGenerator:
                 
                 body {{
                     font-family: 'Segoe UI', 'Arial', sans-serif;
-                    background-color: {background_color};
+                    background-color: {background_color} !important;
                     color: {text_color};
                     line-height: 1.3;
                     font-size: 11pt;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }}
+                
+                .container {{
+                    background-color: {background_color} !important;
+                    min-height: 100vh;
+                    width: 100%;
                 }}
                 
                 /* Header section - stays on first page */
                 .header {{
-                    background: {colors['header_bg']};
+                    background: {colors['header_bg']} !important;
                     padding: 3rem;
                     border-radius: 6px;
                     margin-bottom: 2rem;
@@ -428,18 +436,20 @@ class ReportGenerator:
                     page-break-inside: avoid;
                     page-break-after: always;
                     min-height: 40vh;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }}
                 
                 .header h1 {{
                     font-size: 24pt;
                     margin-bottom: 1rem;
-                    color: #ffffff;
+                    color: #ffffff !important;
                     font-weight: 600;
                 }}
                 
                 .header p {{
                     font-size: 12pt;
-                    color: rgba(255, 255, 255, 0.9);
+                    color: rgba(255, 255, 255, 0.9) !important;
                     margin: 0.5rem 0;
                 }}
                 
@@ -451,37 +461,40 @@ class ReportGenerator:
                     margin-bottom: 2rem;
                     page-break-inside: avoid;
                     page-break-after: always;
+                    background-color: {background_color} !important;
                 }}
                 
                 .stat-card {{
-                    background: {colors['card_bg']};
+                    background: {colors['card_bg']} !important;
                     padding: 1.5rem;
                     border-radius: 6px;
                     text-align: center;
                     border: 1px solid {colors['border']};
                     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }}
                 
                 .stat-number {{
                     font-size: 18pt;
                     font-weight: 700;
-                    color: {colors['accent_primary']};
+                    color: {colors['accent_primary']} !important;
                     margin-bottom: 0.5rem;
                     display: block;
                 }}
                 
                 .stat-label {{
                     font-size: 10pt;
-                    color: {secondary_text_color};
+                    color: {secondary_text_color} !important;
                     font-weight: 500;
                 }}
                 
                 /* Chart containers - optimized for A4 pages */
                 .chart-container {{
-                    background: {background_color};
+                    background: {background_color} !important;
                     border: 1px solid {colors['border']};
                     border-radius: 6px;
-                    padding: 1rem;
+                    padding: 1.5rem;
                     margin: 0;
                     page-break-before: always;
                     page-break-inside: avoid;
@@ -493,6 +506,8 @@ class ReportGenerator:
                     flex-direction: column;
                     box-sizing: border-box;
                     width: 100%;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }}
                 
                 .chart-container:first-child {{
@@ -500,36 +515,39 @@ class ReportGenerator:
                 }}
                 
                 .chart-header {{
-                    margin-bottom: 0.75rem;
-                    padding-bottom: 0.5rem;
+                    margin-bottom: 1.5rem;
+                    padding-bottom: 1rem;
                     border-bottom: 1px solid {colors['border']};
                     flex-shrink: 0;
+                    padding-top: 1rem;
                 }}
                 
                 .chart-title {{
-                    font-size: 12pt;
+                    font-size: 14pt;
                     font-weight: 600;
-                    margin-bottom: 0.4rem;
+                    margin-bottom: 0.8rem;
                     color: {text_color};
                     word-wrap: break-word;
-                    line-height: 1.2;
+                    line-height: 1.3;
                 }}
                 
                 .chart-meta {{
                     display: flex;
-                    gap: 0.75rem;
-                    font-size: 9pt;
+                    gap: 1rem;
+                    font-size: 10pt;
                     color: {secondary_text_color};
                     align-items: center;
                     flex-wrap: wrap;
+                    justify-content: space-between;
+                    width: 100%;
                 }}
                 
                 .chart-badge {{
                     background: {colors['accent_primary']};
                     color: white;
-                    padding: 0.2rem 0.6rem;
-                    border-radius: 10px;
-                    font-size: 8pt;
+                    padding: 0.3rem 0.8rem;
+                    border-radius: 12px;
+                    font-size: 9pt;
                     font-weight: 600;
                     white-space: nowrap;
                 }}
@@ -537,9 +555,10 @@ class ReportGenerator:
                 .chart-plot {{
                     flex: 1;
                     width: 100%;
-                    height: 400px;
-                    margin: 0.5rem 0 0 0;
+                    height: 450px;
+                    margin: 1rem 0 0 0;
                     border-radius: 4px;
+                    padding-top: 0.5rem;
                 }}
                 
                 .chart-plot > div {{
@@ -549,18 +568,20 @@ class ReportGenerator:
                 
                 /* Search section - hidden in print */
                 .search-container {{
-                    background: {colors['card_bg']};
+                    background: {colors['card_bg']} !important;
                     padding: 2rem;
                     border-radius: 6px;
                     margin-bottom: 2rem;
                     border: 1px solid {colors['border']};
                     page-break-inside: avoid;
                     page-break-after: always;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }}
                 
                 .search-container h3 {{
                     margin-bottom: 1rem;
-                    color: {text_color};
+                    color: {text_color} !important;
                     font-size: 14pt;
                     font-weight: 600;
                 }}
@@ -570,8 +591,8 @@ class ReportGenerator:
                     padding: 0.8rem;
                     border: 1px solid {colors['border']};
                     border-radius: 4px;
-                    background: {background_color};
-                    color: {text_color};
+                    background: {background_color} !important;
+                    color: {text_color} !important;
                     font-size: 11pt;
                 }}
                 
@@ -586,8 +607,8 @@ class ReportGenerator:
                     padding: 0.6rem 1rem;
                     border: 1px solid {colors['border']};
                     border-radius: 12px;
-                    background: {colors['card_bg']};
-                    color: {text_color};
+                    background: {colors['card_bg']} !important;
+                    color: {text_color} !important;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     font-size: 10pt;
@@ -595,20 +616,22 @@ class ReportGenerator:
                 }}
                 
                 .filter-btn:hover, .filter-btn.active {{
-                    background: {colors['accent_primary']};
+                    background: {colors['accent_primary']} !important;
                     border-color: {colors['accent_primary']};
-                    color: white;
+                    color: white !important;
                 }}
                 
                 /* Footer */
                 .footer {{
-                    background: {colors['header_bg']};
+                    background: {colors['header_bg']} !important;
                     padding: 1rem;
                     border-radius: 6px;
                     text-align: center;
                     margin-top: 1rem;
-                    color: white;
+                    color: white !important;
                     page-break-inside: avoid;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }}
                 
                 .footer h3 {{
@@ -630,6 +653,11 @@ class ReportGenerator:
                         print-color-adjust: exact;
                         margin: 0;
                         padding: 0;
+                    }}
+                    
+                    /* Hide loading overlay in print */
+                    #loadingOverlay {{
+                        display: none !important;
                     }}
                     
                     .search-container {{
@@ -655,7 +683,7 @@ class ReportGenerator:
                     .chart-container {{
                         page-break-before: always;
                         margin: 0;
-                        padding: 0.75rem;
+                        padding: 1.5rem;
                         border: 1px solid #ddd;
                         background: white !important;
                         height: 100vh;
@@ -672,16 +700,19 @@ class ReportGenerator:
                     
                     .chart-header {{
                         flex-shrink: 0;
-                        height: 80px;
-                        margin-bottom: 0.5rem;
-                        padding-bottom: 0.5rem;
+                        height: 100px;
+                        margin-bottom: 1rem;
+                        padding-bottom: 0.8rem;
+                        padding-top: 1rem;
+                        border-bottom: 1px solid #ddd;
                     }}
                     
                     .chart-plot {{
                         flex: 1;
                         width: 100%;
-                        height: calc(100vh - 150px);
+                        height: calc(100vh - 180px);
                         margin: 0;
+                        padding-top: 0.5rem;
                     }}
                     
                     .chart-plot > div {{
@@ -692,11 +723,20 @@ class ReportGenerator:
                     .chart-title {{
                         color: #000 !important;
                         font-size: 11pt !important;
+                        margin-bottom: 0.5rem;
                     }}
                     
                     .chart-meta {{
                         color: #666 !important;
                         font-size: 8pt !important;
+                        gap: 0.8rem;
+                    }}
+                    
+                    .chart-badge {{
+                        background: #2c3e50 !important;
+                        color: white !important;
+                        padding: 0.2rem 0.5rem !important;
+                        font-size: 7pt !important;
                     }}
                     
                     .footer {{
@@ -761,10 +801,11 @@ class ReportGenerator:
                     <div style="margin-top: 20px; width: 200px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px;">
                         <div id="loadingBar" style="height: 100%; background: #3498db; width: 0%; border-radius: 2px; transition: width 0.3s;"></div>
                     </div>
+                    <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">El reporte se mostrará automáticamente al completarse</div>
                 </div>
             </div>
             
-            <div class="container" id="mainContent" style="opacity: 0; transition: opacity 0.5s;">
+            <div class="container" id="mainContent" style="opacity: 0; transition: opacity 0.5s; background-color: {background_color} !important; min-height: 100vh;">
                 <div class="header">
                     <h1>📊 Reporte de Espectros Armónicos</h1>
                     <p>Análisis generado desde: <strong>{db_name}</strong></p>
@@ -801,8 +842,8 @@ class ReportGenerator:
         # Add filter buttons for each chart type
         chart_type_emoji = {
             'waveform': '📈',
-            'spectrum_hz': '🔊',
-            'spectrum_order': '🎵',
+            'spectrum_hz': '📊',
+            'spectrum_order': '📊',
             'generic': '📊'
         }
         
@@ -828,7 +869,7 @@ class ReportGenerator:
             
             emoji = chart_type_emoji.get(chart_type, '📊')
             
-            # Optimize figure for printing with proper colors
+            # Optimize figure for printing with proper colors and integer formatting
             figure_copy = figure
             figure_copy.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)',
@@ -847,14 +888,16 @@ class ReportGenerator:
                     gridcolor=colors['border'],
                     linecolor=text_color,
                     tickfont=dict(color=text_color, size=9),
-                    title_font=dict(size=10)
+                    title_font=dict(size=10),
+                    tickformat='.0f'  # Show integers only
                 ),
                 yaxis=dict(
                     color=text_color,
                     gridcolor=colors['border'],
                     linecolor=text_color,
                     tickfont=dict(color=text_color, size=9),
-                    title_font=dict(size=10)
+                    title_font=dict(size=10),
+                    tickformat='.0f'  # Show integers only
                 ),
                 legend=dict(
                     font=dict(color=text_color, size=9),
@@ -869,6 +912,25 @@ class ReportGenerator:
                 showlegend=True if len(figure.data) > 1 else False,
                 autosize=False
             )
+            
+            # Since data is now rounded at source, just ensure hover templates are clean
+            for trace in figure_copy.data:
+                if hasattr(trace, 'hovertemplate') and trace.hovertemplate:
+                    # Data is already rounded, just ensure format is clean
+                    continue
+                elif hasattr(trace, 'type'):
+                    # Set appropriate hover templates based on chart type
+                    if trace.type == 'scatter' and hasattr(trace, 'mode') and 'lines' in str(trace.mode):
+                        trace.hovertemplate = '<b>Tiempo:</b> %{x}s<br><b>Amplitud:</b> %{y}<extra></extra>'
+                    elif trace.type == 'bar':
+                        if 'hz' in table_name.lower() or 'freq' in table_name.lower():
+                            trace.hovertemplate = '<b>Frecuencia:</b> %{x} Hz<br><b>Magnitud:</b> %{y}<extra></extra>'
+                        elif 'order' in table_name.lower() or 'orden' in table_name.lower():
+                            trace.hovertemplate = '<b>Orden:</b> %{x}<br><b>Magnitud:</b> %{y}<extra></extra>'
+                        else:
+                            trace.hovertemplate = '<b>X:</b> %{x}<br><b>Y:</b> %{y}<extra></extra>'
+                    else:
+                        trace.hovertemplate = '<b>X:</b> %{x}<br><b>Y:</b> %{y}<extra></extra>'
             
             # Configure for web display (responsive, no mode bar)
             figure_copy.update_layout(
@@ -891,7 +953,7 @@ class ReportGenerator:
                         <div class="chart-meta">
                             <span class="chart-badge">{chart_type.replace('_', ' ').title()}</span>
                             <span>📊 {info.get('data_points', 0):,} puntos de datos</span>
-                            <span>📄 Página {i + 2} de {len(charts_data) + 1}</span>
+                            <span style="margin-left: auto;">📄 Página {i + 2} de {len(charts_data) + 1}</span>
                         </div>
                     </div>
                     <div class="chart-plot" id="chart-{i}">
@@ -944,6 +1006,12 @@ class ReportGenerator:
                         return;
                     }}
                     
+                    // Auto-hide loading after shorter time for better UX
+                    setTimeout(() => {{
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        document.getElementById('mainContent').style.opacity = '1';
+                    }}, 3000);  // Reduced from 10 seconds to 3 seconds
+                    
                     // Check for Plotly charts loading
                     const checkInterval = setInterval(() => {{
                         let loadedCount = 0;
@@ -956,28 +1024,29 @@ class ReportGenerator:
                         chartsLoaded = loadedCount;
                         updateProgress();
                         
-                        if (loadedCount >= totalCharts) {{
+                        // Hide loading when 80% of charts are loaded for better responsiveness
+                        if (loadedCount >= totalCharts * 0.8) {{
                             clearInterval(checkInterval);
+                            setTimeout(() => {{
+                                document.getElementById('loadingOverlay').style.display = 'none';
+                                document.getElementById('mainContent').style.opacity = '1';
+                            }}, 100);
                         }}
-                    }}, 100);
-                    
-                    // Fallback: hide loading after 10 seconds
-                    setTimeout(() => {{
-                        document.getElementById('loadingOverlay').style.display = 'none';
-                        document.getElementById('mainContent').style.opacity = '1';
-                    }}, 10000);
+                    }}, 50);  // Check more frequently
                     
                     // Search functionality
-                    searchInput.addEventListener('input', function() {{
-                        const searchTerm = this.value.toLowerCase();
-                        filterChartsBySearch(searchTerm);
-                    }});
+                    if (searchInput) {{
+                        searchInput.addEventListener('input', function() {{
+                            const searchTerm = this.value.toLowerCase();
+                            filterChartsBySearch(searchTerm);
+                        }});
+                    }}
                     
                     // Initialize chart numbering
                     updateChartNumbers();
                     
                     // Ensure charts are properly sized
-                    resizeCharts();
+                    setTimeout(resizeCharts, 500);
                     
                     // Handle window resize
                     window.addEventListener('resize', resizeCharts);
