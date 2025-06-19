@@ -216,6 +216,105 @@ st.markdown("""
         border: 1px solid rgba(241, 196, 15, 0.3);
     }
     
+    /* Session card specific styling */
+    .session-card-container {
+        transition: all 0.3s ease;
+    }
+    
+    .session-card-container:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .favorite-star {
+        filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    }
+    
+    .session-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .metric-item {
+        text-align: center;
+        padding: 0.5rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .metric-item:hover {
+        transform: scale(1.05);
+    }
+    
+    .session-actions {
+        display: flex;
+        gap: 0.3rem;
+        margin-top: 1rem;
+    }
+    
+    .session-actions button {
+        flex: 1;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .session-actions button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Enhanced stats bar */
+    .stats-bar {
+        background: linear-gradient(90deg, #1f2937 0%, #374151 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(75, 85, 99, 0.3);
+    }
+    
+    .stats-item {
+        text-align: center;
+        padding: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-item:hover {
+        transform: scale(1.1);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        border-radius: 16px;
+        margin: 2rem 0;
+        border: 2px dashed #4b5563;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+    }
+    
     /* Professional button styling */
     .stButton > button {
         background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
@@ -429,6 +528,7 @@ def render_sidebar():
         <div class="session-card">
             <h4>📊 Estadísticas Globales</h4>
             <p><strong>Sesiones:</strong> {stats['total_sessions']}</p>
+            <p><strong>Favoritas:</strong> ⭐ {stats['favorites_count']}</p>
             <p><strong>Gráficos:</strong> {stats['total_charts']:,}</p>
             <p><strong>Datos:</strong> {stats['total_data_points']:,} puntos</p>
             <p><strong>Promedio:</strong> {stats['avg_charts_per_session']} gráficos/sesión</p>
@@ -842,7 +942,7 @@ def render_session_view():
     render_report_generation()
 
 def render_session_list():
-    """Render list of saved sessions"""
+    """Render list of saved sessions with compact cards and favorites pinned on top"""
     st.markdown("### 📚 Historial de Sesiones")
     
     sessions = st.session_state.session_manager.get_sessions()
@@ -851,96 +951,284 @@ def render_session_list():
         st.info("📝 No hay sesiones guardadas aún. Realiza tu primer análisis para comenzar.")
         return
     
-    # Search and filter sessions
-    col1, col2 = st.columns([2, 1])
+    # Enhanced search and filter UI
+    st.markdown("---")
+    col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
-        search_term = st.text_input("🔍 Buscar sesiones", placeholder="Nombre de archivo, fecha...")
+        search_term = st.text_input("🔍 Buscar sesiones", placeholder="Nombre de archivo, fecha...", label_visibility="collapsed")
     with col2:
-        sort_by = st.selectbox("🔄 Ordenar por", ["Fecha (reciente)", "Fecha (antigua)", "Nombre", "Gráficos"])
+        filter_type = st.selectbox("📁", ["Todas", "⭐ Favoritas", "📄 Regulares"], label_visibility="collapsed")
+    with col3:
+        sort_by = st.selectbox("🔄", ["⭐ Favoritos primero", "📅 Más recientes", "📅 Más antiguas", "🔤 Nombre A-Z", "📊 + Gráficos"], label_visibility="collapsed")
     
-    # Filter sessions
-    filtered_sessions = sessions
+    # Filter sessions based on selection
+    if filter_type == "⭐ Favoritas":
+        filtered_sessions = [s for s in sessions if s['is_favorite']]
+    elif filter_type == "📄 Regulares":
+        filtered_sessions = [s for s in sessions if not s['is_favorite']]
+    else:
+        filtered_sessions = sessions
+    
+    # Apply search filter
     if search_term:
         filtered_sessions = [
-            s for s in sessions 
+            s for s in filtered_sessions 
             if search_term.lower() in s['session_name'].lower() or 
                search_term.lower() in s['original_filename'].lower()
         ]
     
     # Sort sessions
-    if sort_by == "Fecha (reciente)":
+    if sort_by == "⭐ Favoritos primero":
+        filtered_sessions.sort(key=lambda x: (not x['is_favorite'], x['created_at']), reverse=True)
+    elif sort_by == "📅 Más recientes":
         filtered_sessions.sort(key=lambda x: x['created_at'], reverse=True)
-    elif sort_by == "Fecha (antigua)":
+    elif sort_by == "📅 Más antiguas":
         filtered_sessions.sort(key=lambda x: x['created_at'])
-    elif sort_by == "Nombre":
+    elif sort_by == "🔤 Nombre A-Z":
         filtered_sessions.sort(key=lambda x: x['session_name'])
-    elif sort_by == "Gráficos":
+    elif sort_by == "📊 + Gráficos":
         filtered_sessions.sort(key=lambda x: x['charts_count'], reverse=True)
     
-    st.markdown(f"**Mostrando {len(filtered_sessions)} de {len(sessions)} sesiones**")
+    # Separate favorites and regular sessions for better display
+    favorite_sessions = [s for s in filtered_sessions if s['is_favorite']]
+    regular_sessions = [s for s in filtered_sessions if not s['is_favorite']]
     
-    # Display sessions
-    for session in filtered_sessions:
-        with st.expander(f"📊 {session['session_name']}", expanded=False):
-            col1, col2, col3, col4 = st.columns(4)
+    # Display session statistics with modern design
+    stats = st.session_state.session_manager.get_session_stats()
+    
+    # Enhanced stats bar with new CSS classes
+    stats_html = f"""
+    <div class="stats-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div class="stats-item" style="min-width: 120px;">
+            <div class="stats-number" style="color: #60a5fa;">{stats['total_sessions']}</div>
+            <div class="stats-label" style="color: #d1d5db;">Total Sesiones</div>
+        </div>
+        <div class="stats-item" style="min-width: 120px;">
+            <div class="stats-number favorite-star" style="color: #fbbf24;">{stats['favorites_count']}</div>
+            <div class="stats-label" style="color: #d1d5db;">⭐ Favoritas</div>
+        </div>
+        <div class="stats-item" style="min-width: 120px;">
+            <div class="stats-number" style="color: #34d399;">{stats['total_charts']:,}</div>
+            <div class="stats-label" style="color: #d1d5db;">📊 Gráficos</div>
+        </div>
+        <div class="stats-item" style="min-width: 120px;">
+            <div class="stats-number" style="color: #f472b6;">{stats['avg_charts_per_session']}</div>
+            <div class="stats-label" style="color: #d1d5db;">📈 Promedio</div>
+        </div>
+    </div>
+    """
+    st.markdown(stats_html, unsafe_allow_html=True)
+    
+    # Results counter
+    if search_term or filter_type != "Todas":
+        st.markdown(f"**📋 Mostrando {len(filtered_sessions)} de {len(sessions)} sesiones**")
+    
+    # Display Favorites Section (Pinned on Top)
+    if favorite_sessions:
+        st.markdown("### ⭐ Sesiones Favoritas")
+        render_session_cards(favorite_sessions, is_favorites_section=True)
+        st.markdown("---")
+    
+    # Display Regular Sessions
+    if regular_sessions:
+        if favorite_sessions:  # Only show header if there are favorites above
+            st.markdown("### 📄 Otras Sesiones")
+        render_session_cards(regular_sessions, is_favorites_section=False)
+    
+    # Empty state for filtered results
+    if not filtered_sessions:
+        st.markdown("""
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3 style="color: #9ca3af; margin-bottom: 0.5rem;">No se encontraron sesiones</h3>
+            <p style="color: #6b7280;">Intenta ajustar los filtros o términos de búsqueda</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+def render_session_cards(sessions, is_favorites_section=False):
+    """Render compact session cards in a grid layout"""
+    
+    # Display sessions in rows of 2 cards
+    for i in range(0, len(sessions), 2):
+        cols = st.columns(2, gap="medium")
+        
+        for j, col in enumerate(cols):
+            session_idx = i + j
+            if session_idx < len(sessions):
+                session = sessions[session_idx]
+                
+                with col:
+                    render_single_session_card(session, is_favorites_section)
+
+def render_single_session_card(session, is_favorites_section):
+    """Render a single compact session card using Streamlit components"""
+    
+    # Card styling based on favorite status
+    if session['is_favorite']:
+        card_style = "background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-left: 4px solid #fbbf24; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+        favorite_icon = "⭐"
+        star_color = "#fbbf24"
+    else:
+        card_style = "background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-left: 4px solid #374151; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+        favorite_icon = "☆"
+        star_color = "#6b7280"
+    
+    # Calculate file size in MB
+    file_size_mb = session['file_size'] / 1024 / 1024 if session['file_size'] else 0
+    
+    # Format creation date
+    try:
+        from datetime import datetime
+        created_date = datetime.fromisoformat(session['created_at'].replace(' Chile/Continental', ''))
+        formatted_date = created_date.strftime("%d/%m/%Y %H:%M")
+    except:
+        formatted_date = session['created_at'][:16]  # Fallback
+    
+    # Chart types summary
+    chart_types_summary = ""
+    if session['chart_types']:
+        types_list = []
+        for chart_type, count in list(session['chart_types'].items())[:3]:  # Show max 3 types
+            type_display = chart_type.replace('_', ' ').title()
+            types_list.append(f"{type_display}: {count}")
+        chart_types_summary = " • ".join(types_list)
+        if len(session['chart_types']) > 3:
+            chart_types_summary += "..."
+    
+    # Create the card container
+    with st.container():
+        st.markdown(f'<div style="{card_style}">', unsafe_allow_html=True)
+        
+        # Header with name and favorite star
+        col_name, col_star = st.columns([8, 1])
+        with col_name:
+            st.markdown(f"<h4 style='margin: 0; color: #f9fafb; font-size: 1.1rem; font-weight: 600;'>{session['session_name']}</h4>", unsafe_allow_html=True)
+        with col_star:
+            st.markdown(f"<div style='color: {star_color}; font-size: 1.3rem; text-align: center;'>{favorite_icon}</div>", unsafe_allow_html=True)
+        
+        # File info
+        st.markdown(f"<div style='color: #9ca3af; font-size: 0.9rem; margin: 0.5rem 0;'>📁 {session['original_filename'][:30]}{'...' if len(session['original_filename']) > 30 else ''}</div>", unsafe_allow_html=True)
+        
+        # Metrics row using Streamlit columns
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div style="text-align: center; background: rgba(96, 165, 250, 0.1); padding: 0.5rem; border-radius: 6px;">
+                <div style="font-size: 1.3rem; font-weight: bold; color: #60a5fa;">{session['charts_count']}</div>
+                <div style="font-size: 0.7rem; color: #9ca3af;">Gráficos</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="text-align: center; background: rgba(52, 211, 153, 0.1); padding: 0.5rem; border-radius: 6px;">
+                <div style="font-size: 1.3rem; font-weight: bold; color: #34d399;">{session['total_data_points']:,}</div>
+                <div style="font-size: 0.7rem; color: #9ca3af;">Puntos</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="text-align: center; background: rgba(168, 85, 247, 0.1); padding: 0.5rem; border-radius: 6px;">
+                <div style="font-size: 1.3rem; font-weight: bold; color: #a855f7;">{file_size_mb:.1f}</div>
+                <div style="font-size: 0.7rem; color: #9ca3af;">MB</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Chart types
+        st.markdown(f"""
+        <div style="color: #d1d5db; font-size: 0.8rem; margin: 0.5rem 0; 
+                    background: rgba(107, 114, 128, 0.1); padding: 0.5rem; border-radius: 6px;">
+            📊 {chart_types_summary if chart_types_summary else 'Sin tipos específicos'}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Date
+        st.markdown(f"<div style='color: #6b7280; font-size: 0.75rem; margin-bottom: 0.5rem;'>🕐 {formatted_date}</div>", unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Action buttons below the card
+    render_session_actions(session)
+
+def render_session_actions(session):
+    """Render action buttons for a session in a compact layout"""
+    
+    # Action buttons in a compact row
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    
+    with col1:
+        if st.button("👁️", key=f"view_{session['id']}", help="Ver Sesión", use_container_width=True):
+            session_data = st.session_state.session_manager.load_session(session['id'])
+            if session_data:
+                st.session_state.charts_generated = session_data['charts_generated']
+                st.session_state.current_session_id = session['id']
+                st.session_state.view_mode = "view_session"
+                st.rerun()
+    
+    with col2:
+        star_icon = "☆" if session['is_favorite'] else "⭐"
+        star_help = "Quitar de favoritas" if session['is_favorite'] else "Marcar como favorita"
+        if st.button(star_icon, key=f"fav_{session['id']}", help=star_help, use_container_width=True):
+            if st.session_state.session_manager.toggle_favorite(session['id']):
+                st.success("✅ Favorito actualizado")
+                st.rerun()
+    
+    with col3:
+        if st.button("✏️", key=f"edit_{session['id']}", help="Editar nombre", use_container_width=True):
+            st.session_state[f"edit_mode_{session['id']}"] = True
+            st.rerun()
+    
+    with col4:
+        if st.button("📋", key=f"duplicate_{session['id']}", help="Duplicar", use_container_width=True):
+            session_data = st.session_state.session_manager.load_session(session['id'])
+            if session_data:
+                duplicate_name = f"{session['session_name']} - Copia"
+                new_id = st.session_state.session_manager.save_session(session_data, duplicate_name)
+                if new_id:
+                    st.success("✅ Sesión duplicada")
+                    st.rerun()
+    
+    with col5:
+        if st.button("🗑️", key=f"delete_{session['id']}", help="Eliminar", use_container_width=True, type="secondary"):
+            # Simple confirmation using session state
+            confirm_key = f"confirm_delete_{session['id']}"
+            if st.session_state.get(confirm_key, False):
+                if st.session_state.session_manager.delete_session(session['id']):
+                    st.success("✅ Sesión eliminada")
+                    if confirm_key in st.session_state:
+                        del st.session_state[confirm_key]
+                    st.rerun()
+            else:
+                st.session_state[confirm_key] = True
+                st.warning("⚠️ Clic nuevamente para confirmar eliminación")
+                st.rerun()
+    
+    # Name editing modal
+    if st.session_state.get(f"edit_mode_{session['id']}", False):
+        with st.form(key=f"edit_form_{session['id']}"):
+            st.markdown("##### ✏️ Editar nombre de sesión")
+            new_name = st.text_input(
+                "Nuevo nombre:", 
+                value=session['session_name'],
+                key=f"new_name_{session['id']}"
+            )
             
+            col1, col2 = st.columns(2)
             with col1:
-                st.metric("📁 Archivo", session['original_filename'])
+                if st.form_submit_button("💾 Guardar", type="primary", use_container_width=True):
+                    if new_name.strip() and new_name != session['session_name']:
+                        if st.session_state.session_manager.update_session_name(session['id'], new_name.strip()):
+                            st.success("✅ Nombre actualizado")
+                            st.session_state[f"edit_mode_{session['id']}"] = False
+                            st.rerun()
             with col2:
-                st.metric("📊 Gráficos", session['charts_count'])
-            with col3:
-                st.metric("📈 Puntos", f"{session['total_data_points']:,}")
-            with col4:
-                file_size_mb = session['file_size'] / 1024 / 1024 if session['file_size'] else 0
-                st.metric("📏 Tamaño", f"{file_size_mb:.1f} MB")
-            
-            # Chart types
-            if session['chart_types']:
-                st.markdown("**Tipos de gráficos:**")
-                for chart_type, count in session['chart_types'].items():
-                    st.markdown(f"- {chart_type.replace('_', ' ').title()}: {count}")
-            
-            # Actions
-            action_col1, action_col2, action_col3 = st.columns(3)
-            with action_col1:
-                if st.button(f"👁️ Ver Sesión", key=f"view_{session['id']}"):
-                    # Load session
-                    session_data = st.session_state.session_manager.load_session(session['id'])
-                    if session_data:
-                        st.session_state.charts_generated = session_data['charts_generated']
-                        st.session_state.current_session_id = session['id']
-                        st.session_state.view_mode = "view_session"
-                        st.rerun()
-            
-            with action_col2:
-                if st.button(f"📄 Generar Reporte", key=f"report_{session['id']}"):
-                    # Load session and generate report
-                    session_data = st.session_state.session_manager.load_session(session['id'])
-                    if session_data:
-                        report_generator = ReportGenerator()
-                        report_name = f"reporte_{session['id'][:8]}.html"
-                        success = report_generator.generate_html_report(
-                            session_data['charts_generated'],
-                            session_data['filename'],
-                            report_name,
-                            "#ffffff",  # Default white background
-                            False       # Use interactive charts for PDF compatibility
-                        )
-                        if success:
-                            with open(report_name, 'rb') as file:
-                                st.download_button(
-                                    label="⬇️ Descargar",
-                                    data=file.read(),
-                                    file_name=report_name,
-                                    mime="text/html",
-                                    key=f"download_{session['id']}"
-                                )
-            
-            with action_col3:
-                if st.button(f"🗑️ Eliminar", key=f"delete_{session['id']}", type="secondary"):
-                    if st.session_state.session_manager.delete_session(session['id']):
-                        st.success("Sesión eliminada")
-                        st.rerun()
+                if st.form_submit_button("❌ Cancelar", use_container_width=True):
+                    st.session_state[f"edit_mode_{session['id']}"] = False
+                    st.rerun()
+    
+    # Add spacing between sessions
+    st.markdown("<br>", unsafe_allow_html=True)
 
 def render_report_generation():
     """Render report generation section optimized for PDF printing"""
@@ -954,16 +1242,14 @@ def render_report_generation():
     </div>
     """, unsafe_allow_html=True)
     
-    # Report options in a professional container
+    # Main container with modern design
     st.markdown("""
     <div class="report-options">
-        <h4>📄 Configuración del Reporte PDF</h4>
-        <p style="margin: 0.5rem 0; color: #bdc3c7; font-size: 0.9rem;">
-            Genera un reporte HTML optimizado para convertir a PDF con un gráfico por página
-        </p>
+        <h4 style="margin-bottom: 1.5rem;">📄 Configuración del Reporte PDF</h4>
     </div>
     """, unsafe_allow_html=True)
     
+    # Report name and basic info
     col1, col2 = st.columns([3, 1])
     
     with col1:
@@ -974,131 +1260,242 @@ def render_report_generation():
         )
     
     with col2:
-        st.markdown("<br>", unsafe_allow_html=True)  # Spacing
         total_charts = len(st.session_state.charts_generated)
-        st.metric("📊 Gráficos", f"{total_charts}")
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                    color: white; padding: 1rem; border-radius: 8px; text-align: center; margin-top: 1.8rem;">
+            <div style="font-size: 1.5rem; font-weight: bold;">{total_charts}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">📊 Gráficos</div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    # Background color selection
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Color theme selection with beautiful presets
     st.markdown("""
-    <div class="color-picker-container">
-        <h5 style="margin-bottom: 0.5rem;">🎨 Esquema de Color para Impresión</h5>
-        <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 1rem;">
-            Selecciona el esquema de color. Los textos y gráficos se ajustarán automáticamente para óptima legibilidad.
+    <div style="margin: 2rem 0 1rem 0;">
+        <h5 style="color: #ecf0f1; margin-bottom: 1rem;">🎨 Seleccionar Tema de Color</h5>
+        <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 1.5rem;">
+            Elige el esquema de color perfecto para tu reporte profesional
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Professional color presets for printing
-    col1, col2, col3, col4 = st.columns(4)
+    # Professional color presets with enhanced design
+    color_presets = [
+        {
+            "name": "📄 Clásico Blanco",
+            "bg": "#ffffff",
+            "text": "#2c3e50",
+            "accent": "#3498db",
+            "description": "Ideal para impresión estándar y presentaciones formales",
+            "icon": "📄"
+        },
+        {
+            "name": "🌙 Ejecutivo Azul",
+            "bg": "#2c3e50", 
+            "text": "#ecf0f1",
+            "accent": "#3498db",
+            "description": "Elegante y profesional, perfecto para presentaciones corporativas",
+            "icon": "🌙"
+        },
+        {
+            "name": "🌟 Moderno Gris",
+            "bg": "#34495e",
+            "text": "#ecf0f1", 
+            "accent": "#f39c12",
+            "description": "Equilibrio perfecto entre elegancia y modernidad",
+            "icon": "🌟"
+        }
+    ]
     
-    color_presets = {
-        "Blanco Clásico": "#ffffff",
-        "Gris Suave": "#f8f9fa", 
-        "Azul Ejecutivo": "#2c3e50",
-        "Negro Elegante": "#1a1a1a"
-    }
+    # Initialize selected theme
+    if 'selected_theme' not in st.session_state:
+        st.session_state.selected_theme = 0
     
-    selected_preset = None
-    with col1:
-        if st.button("⚪ Blanco Clásico", use_container_width=True, help="Ideal para impresión estándar"):
-            selected_preset = "#ffffff"
-    with col2:
-        if st.button("🔘 Gris Suave", use_container_width=True, help="Reduce el contraste, ahorra tinta"):
-            selected_preset = "#f8f9fa"
-    with col3:
-        if st.button("🔵 Azul Ejecutivo", use_container_width=True, help="Presentaciones profesionales"):
-            selected_preset = "#2c3e50"
-    with col4:
-        if st.button("⚫ Negro Elegante", use_container_width=True, help="Máximo contraste"):
-            selected_preset = "#1a1a1a"
+    # Theme selection with beautiful cards
+    col1, col2, col3 = st.columns(3)
+    cols = [col1, col2, col3]
     
-    # Color picker
-    if 'selected_bg_color' not in st.session_state:
-        st.session_state.selected_bg_color = "#ffffff"
+    for i, preset in enumerate(color_presets):
+        with cols[i]:
+            is_selected = st.session_state.selected_theme == i
+            border_style = "border: 3px solid #3498db;" if is_selected else "border: 2px solid rgba(255,255,255,0.1);"
+            
+            if st.button(
+                f"{preset['icon']} {preset['name']}", 
+                key=f"theme_{i}",
+                use_container_width=True,
+                type="primary" if is_selected else "secondary"
+            ):
+                st.session_state.selected_theme = i
+                st.rerun()
+            
+            # Theme preview card
+            st.markdown(f"""
+            <div style="background: {preset['bg']}; {border_style}
+                        padding: 1.5rem; border-radius: 8px; margin: 0.5rem 0;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease;">
+                <div style="color: {preset['text']}; font-weight: 600; margin-bottom: 0.5rem;">
+                    Vista Previa
+                </div>
+                <div style="color: {preset['accent']}; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    ■ Gráfico de Espectro
+                </div>
+                <div style="color: {preset['text']}; font-size: 0.8rem; opacity: 0.8;">
+                    {preset['description']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
     
-    if selected_preset:
-        st.session_state.selected_bg_color = selected_preset
+    # Selected theme details
+    selected_preset = color_presets[st.session_state.selected_theme]
     
-    background_color = st.color_picker(
-        "🎨 Color personalizado",
-        value=st.session_state.selected_bg_color,
-        help="O selecciona un color personalizado"
-    )
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    st.session_state.selected_bg_color = background_color
-    
-    # Color preview and contrast info
-    is_dark = _is_dark_background(background_color)
-    text_color = "#ecf0f1" if is_dark else "#2c3e50"
-    
-    st.markdown(f"""
-    <div style="background: {background_color}; 
-                padding: 1.5rem; 
-                border-radius: 8px; 
-                border: 2px solid rgba(236, 240, 241, 0.2);
-                margin: 1rem 0;
-                text-align: center;">
-        <span style="color: {text_color}; font-weight: 600; font-size: 1.1rem;">
-            📄 Vista previa del reporte impreso
-        </span><br>
-        <small style="color: {text_color}; opacity: 0.8;">
-            Esquema: {"Oscuro" if is_dark else "Claro"} • 
-            Texto: {text_color} • 
-            {"✅ Óptimo para impresión" if background_color in ["#ffffff", "#f8f9fa"] else "⚠️ Verificar contraste al imprimir"}
-        </small>
+    # Chart preview with actual data
+    st.markdown("""
+    <div style="margin: 2rem 0 1rem 0;">
+        <h5 style="color: #ecf0f1; margin-bottom: 1rem;">👁️ Vista Previa del Reporte</h5>
+        <p style="font-size: 0.9rem; color: #bdc3c7; margin-bottom: 1rem;">
+            Así se verá tu reporte con el tema seleccionado
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
+    # Create a preview chart with the selected theme
+    if st.session_state.charts_generated:
+        preview_chart = st.session_state.charts_generated[0]['figure']
+        preview_chart_copy = preview_chart
+        
+        # Apply the selected theme to the preview
+        preview_chart_copy.update_layout(
+            plot_bgcolor=selected_preset['bg'],
+            paper_bgcolor=selected_preset['bg'],
+            font=dict(color=selected_preset['text'], size=11, family='Arial'),
+            title=dict(
+                text=f"{selected_preset['icon']} Vista Previa - {st.session_state.charts_generated[0]['table_name']}",
+                font=dict(color=selected_preset['text'], size=14),
+                x=0.5
+            ),
+            xaxis=dict(
+                color=selected_preset['text'],
+                gridcolor=f"rgba(100,100,100,0.2)" if selected_preset['bg'] != "#ffffff" else "rgba(200,200,200,0.3)",
+                linecolor=selected_preset['text'],
+                tickformat='d'
+            ),
+            yaxis=dict(
+                color=selected_preset['text'],
+                gridcolor=f"rgba(100,100,100,0.2)" if selected_preset['bg'] != "#ffffff" else "rgba(200,200,200,0.3)",
+                linecolor=selected_preset['text'],
+                tickformat='g'
+            ),
+            height=350,
+            margin=dict(l=50, r=30, t=60, b=40)
+        )
+        
+        # Update trace colors to match theme
+        for trace in preview_chart_copy.data:
+            if hasattr(trace, 'line') and trace.line:
+                trace.line.color = selected_preset['accent']
+            if hasattr(trace, 'marker') and trace.marker and hasattr(trace.marker, 'color'):
+                if isinstance(trace.marker.color, str):
+                    trace.marker.color = selected_preset['accent']
+        
+        # Display the preview in a themed container
+        st.markdown(f"""
+        <div style="background: {selected_preset['bg']}; 
+                    padding: 1.5rem; border-radius: 12px; 
+                    border: 2px solid {selected_preset['accent']};
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.15); margin: 1rem 0;">
+        """, unsafe_allow_html=True)
+        
+        st.plotly_chart(preview_chart_copy, use_container_width=True, key="preview_chart")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Theme summary
+        st.markdown(f"""
+        <div style="background: rgba(52, 152, 219, 0.1); 
+                    padding: 1rem; border-radius: 8px; margin: 1rem 0;
+                    border-left: 4px solid {selected_preset['accent']};">
+            <strong style="color: {selected_preset['accent']};">
+                {selected_preset['name']} Seleccionado
+            </strong><br>
+            <small style="color: #bdc3c7;">
+                {selected_preset['description']}
+            </small>
+        </div>
+        """, unsafe_allow_html=True)
+    
     # PDF printing instructions
     st.markdown("""
-    <div class="success-message">
-        📋 <strong>Instrucciones para Conversión a PDF:</strong><br>
-        <small>
-            1. 📁 Descargar el archivo HTML generado<br>
-            2. 🌐 Abrir en cualquier navegador web<br>
-            3. 🖨️ Presionar Ctrl+P (Cmd+P en Mac)<br>
-            4. ⚙️ Seleccionar "Más configuraciones" → "Gráficos en color"<br>
-            5. 💾 Elegir "Guardar como PDF" como destino<br>
-            6. ✅ Resultado: Un PDF con un gráfico por página
-        </small>
+    <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                padding: 1.5rem; border-radius: 12px; margin: 2rem 0; color: white;">
+        <h5 style="margin: 0 0 1rem 0; color: white;">📋 Conversión a PDF Profesional</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <strong>1. 📁 Descargar</strong><br>
+                <small>Archivo HTML optimizado</small>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <strong>2. 🌐 Abrir</strong><br>
+                <small>En cualquier navegador</small>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <strong>3. 🖨️ Imprimir</strong><br>
+                <small>Ctrl+P → Guardar como PDF</small>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <strong>4. ⚙️ Configurar</strong><br>
+                <small>Activar "Gráficos en color"</small>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
     # Advanced options (collapsed)
-    with st.expander("⚙️ Opciones Avanzadas"):
-        st.markdown("**🎯 Optimizaciones aplicadas automáticamente:**")
-        st.markdown("""
-        - ✅ **Un gráfico por página:** Saltos de página automáticos para PDF
-        - ✅ **Colores optimizados:** Ajuste automático de contraste para impresión
-        - ✅ **Tamaño fijo:** Gráficos de 450px de altura para consistencia
-        - ✅ **Fuentes legibles:** Arial 11pt optimizado para impresión
-        - ✅ **Navegación web:** Filtros y búsqueda para visualización en pantalla
-        - ✅ **Márgenes PDF:** 0.75 pulgadas en todos los lados
-        """)
+    with st.expander("⚙️ Opciones Avanzadas y Detalles Técnicos"):
+        col1, col2 = st.columns(2)
         
-        chart_count = len(st.session_state.charts_generated)
-        pages_estimate = chart_count + 1  # Header page + charts (no separate footer page)
-        st.info(f"📊 **Estimación:** {pages_estimate} páginas PDF (1 página de información + {chart_count} gráficos)")
+        with col1:
+            st.markdown("**🎯 Optimizaciones Aplicadas:**")
+            st.markdown("""
+            - ✅ Un gráfico por página para PDF
+            - ✅ Fuentes Arial optimizadas 
+            - ✅ Márgenes profesionales (0.75")
+            - ✅ Colores ajustados automáticamente
+            - ✅ Navegación web interactiva
+            """)
+        
+        with col2:
+            chart_count = len(st.session_state.charts_generated)
+            pages_estimate = chart_count + 1
+            st.markdown("**📊 Estadísticas del Reporte:**")
+            st.markdown(f"""
+            - 📄 **Páginas estimadas:** {pages_estimate}
+            - 📊 **Gráficos incluidos:** {chart_count}
+            - 🎨 **Tema:** {selected_preset['name']}
+            - 📐 **Formato:** A4 Portrait
+            - 🔧 **Tipo:** HTML interactivo → PDF
+            """)
     
-    # Generate button
+    # Generate button with enhanced design
     st.markdown("<br>", unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🚀 Generar Reporte PDF-Ready", type="primary", use_container_width=True):
-            return generate_html_report(report_name, background_color, False)  # Always use interactive charts
+        if st.button(
+            "🚀 Generar Reporte Profesional", 
+            type="primary", 
+            use_container_width=True,
+            help="Genera un reporte HTML optimizado para conversión a PDF"
+        ):
+            return generate_html_report(report_name, selected_preset['bg'], False)
     
     return False
 
-def _is_dark_background(background_color: str) -> bool:
-    """Helper function to determine if background is dark"""
-    hex_color = background_color.lstrip('#')
-    if len(hex_color) == 6:
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        return luminance < 0.5
-    return False
+
 
 def generate_html_report(report_name: str, background_color: str = "#ffffff", use_static_images: bool = False) -> bool:
     """Generate the HTML report optimized for PDF printing"""
@@ -1117,17 +1514,31 @@ def generate_html_report(report_name: str, background_color: str = "#ffffff", us
         # Progress tracking containers
         total_charts = len(st.session_state.charts_generated)
         
-        # Create progress UI
+        # Create progress UI with modern design
         progress_container = st.container()
         with progress_container:
             st.markdown(f"""
-            <div class="success-message">
-                📄 <strong>Generando reporte HTML optimizado para PDF</strong><br>
-                <small>📊 {total_charts} gráficos • 🎨 Fondo: {background_color} • ⚡ Modo interactivo</small>
+            <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                        padding: 2rem; border-radius: 12px; margin: 1rem 0; color: white; text-align: center;">
+                <h4 style="margin: 0 0 1rem 0; color: white;">🚀 Generando Reporte Profesional</h4>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap;">
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold;">{total_charts}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">📊 Gráficos</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold;">{background_color}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">🎨 Tema</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold;">PDF</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">📄 Formato</div>
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Progress elements
+            # Progress elements with modern styling
             progress_bar = st.progress(0)
             status_text = st.empty()
             eta_text = st.empty()
@@ -1155,7 +1566,7 @@ def generate_html_report(report_name: str, background_color: str = "#ffffff", us
             db_name,
             report_name,
             background_color,
-            use_static_images,  # Always False for PDF optimization
+            use_static_images,
             progress_callback=update_progress
         )
         
@@ -1163,54 +1574,144 @@ def generate_html_report(report_name: str, background_color: str = "#ffffff", us
             st.session_state.report_path = report_name
             elapsed_time = time.time() - start_time
             
-            # Clear progress UI and show success
+            # Clear progress UI and show success with enhanced design
             progress_container.empty()
             
-            # Enhanced success message
+            # Success message with beautiful design
             st.markdown(f"""
-            <div class="success-message">
-                ✅ <strong>Reporte HTML generado exitosamente en {elapsed_time:.1f} segundos</strong><br>
-                <small>
-                    📄 Optimizado para PDF • 
-                    🎨 Esquema: {background_color} • 
-                    📊 {total_charts} gráficos • 
-                    📋 Un gráfico por página
-                </small>
+            <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                        padding: 2rem; border-radius: 12px; margin: 2rem 0; color: white; text-align: center;
+                        box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);">
+                <h3 style="margin: 0 0 1rem 0; color: white;">
+                    ✅ ¡Reporte Generado Exitosamente!
+                </h3>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap; margin-bottom: 1.5rem;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.3rem; font-weight: bold;">{elapsed_time:.1f}s</div>
+                        <div style="font-size: 0.9rem;">⚡ Tiempo</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.3rem; font-weight: bold;">{total_charts}</div>
+                        <div style="font-size: 0.9rem;">📊 Gráficos</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.3rem; font-weight: bold;">PDF</div>
+                        <div style="font-size: 0.9rem;">📄 Listo</div>
+                    </div>
+                </div>
+                <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">
+                    Tu reporte está optimizado para conversión a PDF profesional
+                </p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Provide download link and instructions
+            # Enhanced download and open options
+            st.markdown("""
+            <div style="margin: 2rem 0 1rem 0;">
+                <h5 style="color: #ecf0f1; margin-bottom: 1rem;">📁 Descargar Reporte</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Download button with enhanced styling
             with open(report_name, 'rb') as file:
                 st.download_button(
                     label="⬇️ Descargar Reporte HTML",
                     data=file.read(),
                     file_name=report_name,
                     mime="text/html",
-                    type="primary"
+                    type="primary",
+                    use_container_width=True,
+                    help="Descarga el archivo HTML para convertir a PDF localmente"
                 )
             
-            # PDF conversion instructions
+            # Quick actions section
             st.markdown("""
-            <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
-                        padding: 1.5rem; border-radius: 8px; margin: 1rem 0; color: white;">
-                <h5 style="margin: 0 0 1rem 0; color: white;">🖨️ Conversión a PDF:</h5>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div>
-                        <strong>1. Abrir archivo</strong><br>
-                        <small>Doble clic en el HTML descargado</small>
+            <div style="margin: 2rem 0 1rem 0;">
+                <h5 style="color: #ecf0f1; margin-bottom: 1rem;">⚡ Acciones Rápidas</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            quick_col1, quick_col2, quick_col3 = st.columns(3)
+            
+            with quick_col1:
+                if st.button("🔄 Generar Otro Tema", use_container_width=True):
+                    # Reset to allow generating with different theme
+                    st.rerun()
+            
+            with quick_col2:
+                if st.button("📊 Ver Gráficos", use_container_width=True):
+                    st.session_state.view_mode = "view_session"
+                    st.rerun()
+            
+            with quick_col3:
+                if st.button("🆕 Nuevo Análisis", use_container_width=True):
+                    st.session_state.view_mode = "new_analysis"
+                    st.rerun()
+            
+            # PDF conversion instructions with modern design
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); 
+                        padding: 2rem; border-radius: 12px; margin: 2rem 0; color: white;">
+                <h5 style="margin: 0 0 1.5rem 0; color: white; text-align: center;">
+                    🖨️ Guía Rápida: HTML → PDF Profesional
+                </h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📁</div>
+                        <strong>1. Descargar</strong><br>
+                        <small>Usar botón arriba</small>
                     </div>
-                    <div>
-                        <strong>2. Imprimir</strong><br>
-                        <small>Ctrl+P (Cmd+P en Mac)</small>
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌐</div>
+                        <strong>2. Abrir HTML</strong><br>
+                        <small>Doble clic archivo</small>
                     </div>
-                    <div>
-                        <strong>3. Configurar</strong><br>
-                        <small>Destino: "Guardar como PDF"</small>
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🖨️</div>
+                        <strong>3. Imprimir</strong><br>
+                        <small>Ctrl+P en navegador</small>
                     </div>
-                    <div>
-                        <strong>4. Opciones</strong><br>
-                        <small>Activar "Gráficos en color"</small>
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚙️</div>
+                        <strong>4. Configurar</strong><br>
+                        <small>"Más configuraciones"</small>
                     </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎨</div>
+                        <strong>5. Activar Colores</strong><br>
+                        <small>"Gráficos en color" ✅</small>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 1.2rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">✅</div>
+                        <strong>6. Guardar PDF</strong><br>
+                        <small>Destino: PDF</small>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <strong>📋 Resultado:</strong> Un PDF profesional con {total_charts + 1} páginas 
+                    (portada + 1 gráfico por página)
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Important note about browser settings for background colors
+            st.markdown("""
+            <div style="background: rgba(231, 76, 60, 0.15); 
+                        padding: 1.5rem; border-radius: 8px; margin: 1rem 0;
+                        border-left: 4px solid #e74c3c;">
+                <h6 style="color: #e74c3c; margin-bottom: 0.5rem;">
+                    ⚠️ IMPORTANTE: Para que se impriman los colores de fondo
+                </h6>
+                <div style="color: #ecf0f1; font-size: 0.9rem;">
+                    <strong>En el paso 5, DEBE activar "Gráficos en color" o "Background graphics":</strong><br><br>
+                    
+                    <strong>🌐 Chrome/Edge:</strong> Más configuraciones → Activar "Gráficos en color"<br>
+                    <strong>🦊 Firefox:</strong> Más configuraciones → Activar "Imprimir fondos"<br>
+                    <strong>🍎 Safari:</strong> Mostrar detalles → Activar "Imprimir fondos"<br><br>
+                    
+                    <small style="opacity: 0.8;">
+                        Sin esta configuración, el PDF se verá con fondo blanco en lugar del tema seleccionado.
+                    </small>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1218,6 +1719,7 @@ def generate_html_report(report_name: str, background_color: str = "#ffffff", us
             return True
         else:
             progress_container.empty()
+            st.error("❌ Error generando el reporte. Por favor intenta nuevamente.")
             return False
         
     except Exception as e:
@@ -1266,7 +1768,7 @@ def main():
             </div>
         </div>
         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(236,240,241,0.2);">
-            <small style="color: #bdc3c7;">© 2024 • Versión 3.0 • Optimizado para PDF y Reportes Profesionales</small>
+            <small style="color: #bdc3c7;">© 2025 • Versión 3.2 • Optimizado para PDF y Reportes Profesionales</small>
         </div>
     </div>
     """, unsafe_allow_html=True)

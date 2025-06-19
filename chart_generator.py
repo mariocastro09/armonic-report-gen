@@ -104,10 +104,9 @@ class ChartGenerator:
         # Optimize data
         df_optimized = self.optimize_data_for_plotting(df)
         
-        # Round the data to remove decimals
+        # For waveforms, DON'T round the actual data - preserve the waveform shape
+        # Only format the display, not the underlying data
         df_optimized = df_optimized.copy()
-        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
-        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create line chart with optimizations
         fig = go.Figure()
@@ -121,7 +120,7 @@ class ChartGenerator:
                 width=1.5,
                 color='#667eea'
             ),
-            hovertemplate='<b>Tiempo:</b> %{x:.0f}s<br><b>Amplitud:</b> %{y:.0f}<extra></extra>'
+            hovertemplate='<b>Tiempo:</b> %{x}<br><b>Amplitud:</b> %{y}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -139,9 +138,15 @@ class ChartGenerator:
             **self.dark_theme
         )
         
-        # Format axes to show integers only
-        fig.update_xaxes(tickformat='.0f')
-        fig.update_yaxes(tickformat='.0f')
+        # Format axes to show clean integers without .0
+        fig.update_xaxes(
+            tickformat='d',  # 'd' format shows integers without decimals
+            dtick=None  # Let Plotly choose appropriate tick spacing
+        )
+        fig.update_yaxes(
+            tickformat='d',  # 'd' format shows integers without decimals
+            dtick=None
+        )
         
         return fig
     
@@ -153,23 +158,35 @@ class ChartGenerator:
         df_sorted = df.sort_values('ValueX')
         df_optimized = self.optimize_data_for_plotting(df_sorted, max_points=1000)  # Fewer points for bar charts
         
-        # Round the data to remove decimals
+        # For spectrum data, round X to meaningful frequency bins and aggregate Y values
         df_optimized = df_optimized.copy()
         df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
-        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(1)  # Keep some precision for Y
+        
+        # Aggregate duplicate X values created by rounding
+        if df_optimized.duplicated(subset=['ValueX']).any():
+            df_optimized = (
+                df_optimized.groupby('ValueX', as_index=False)['ValueY']
+                .sum()  # Sum magnitudes for same frequency (more appropriate for spectrum)
+            )
+            # Round Y after aggregation but keep reasonable precision
+            df_optimized['ValueY'] = df_optimized['ValueY'].round(1)
+        
+        # Convert X to integers for clean category labels
+        df_optimized['ValueX_label'] = df_optimized['ValueX'].astype(int).astype(str)
         
         # Create bar chart
         fig = go.Figure()
         
         fig.add_trace(go.Bar(
-            x=df_optimized['ValueX'].astype(str),
+            x=df_optimized['ValueX_label'],
             y=df_optimized['ValueY'],
             name=table_name,
             marker=dict(
                 color='#17a2b8',
                 line=dict(width=0.5, color='#138496')
             ),
-            hovertemplate='<b>Frecuencia:</b> %{x} Hz<br><b>Magnitud:</b> %{y:.0f}<extra></extra>'
+            hovertemplate='<b>Frecuencia:</b> %{x} Hz<br><b>Magnitud:</b> %{y}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -188,10 +205,14 @@ class ChartGenerator:
             **self.dark_theme
         )
         
+        # Use category type for X axis (frequency bins)
         fig.update_xaxes(type='category')
         
-        # Format y-axis to show integers only
-        fig.update_yaxes(tickformat='.0f')
+        # Format y-axis to show clean numbers without unnecessary decimals
+        fig.update_yaxes(
+            tickformat='g',  # 'g' format automatically chooses best representation
+            dtick=None
+        )
         
         return fig
     
@@ -203,23 +224,35 @@ class ChartGenerator:
         df_sorted = df.sort_values('ValueX')
         df_optimized = self.optimize_data_for_plotting(df_sorted, max_points=1000)
         
-        # Round the data to remove decimals
+        # For order spectrum, round X to meaningful order values and aggregate Y
         df_optimized = df_optimized.copy()
         df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
-        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
+        df_optimized['ValueY'] = df_optimized['ValueY'].round(1)  # Keep some precision for Y
+        
+        # Aggregate duplicate X values created by rounding
+        if df_optimized.duplicated(subset=['ValueX']).any():
+            df_optimized = (
+                df_optimized.groupby('ValueX', as_index=False)['ValueY']
+                .sum()  # Sum magnitudes for same order (more appropriate for spectrum)
+            )
+            # Round Y after aggregation but keep reasonable precision
+            df_optimized['ValueY'] = df_optimized['ValueY'].round(1)
+        
+        # Convert X to integers for clean category labels
+        df_optimized['ValueX_label'] = df_optimized['ValueX'].astype(int).astype(str)
         
         # Create bar chart
         fig = go.Figure()
         
         fig.add_trace(go.Bar(
-            x=df_optimized['ValueX'].astype(str),
+            x=df_optimized['ValueX_label'],
             y=df_optimized['ValueY'],
             name=table_name,
             marker=dict(
                 color='#28a745',
                 line=dict(width=0.5, color='#20c997')
             ),
-            hovertemplate='<b>Orden:</b> %{x}<br><b>Magnitud:</b> %{y:.0f}<extra></extra>'
+            hovertemplate='<b>Orden:</b> %{x}<br><b>Magnitud:</b> %{y}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -238,10 +271,14 @@ class ChartGenerator:
             **self.dark_theme
         )
         
+        # Use category type for X axis (order values)
         fig.update_xaxes(type='category')
         
-        # Format y-axis to show integers only
-        fig.update_yaxes(tickformat='.0f')
+        # Format y-axis to show clean numbers without unnecessary decimals
+        fig.update_yaxes(
+            tickformat='g',  # 'g' format automatically chooses best representation
+            dtick=None
+        )
         
         return fig
     
@@ -252,10 +289,8 @@ class ChartGenerator:
         # Optimize data
         df_optimized = self.optimize_data_for_plotting(df, max_points=2000)
         
-        # Round the data to remove decimals
+        # For scatter plots, preserve the data relationship - don't over-aggregate
         df_optimized = df_optimized.copy()
-        df_optimized['ValueX'] = df_optimized['ValueX'].round(0)
-        df_optimized['ValueY'] = df_optimized['ValueY'].round(0)
         
         # Create scatter chart
         fig = go.Figure()
@@ -271,7 +306,7 @@ class ChartGenerator:
                 opacity=0.7,
                 line=dict(width=1, color='#e0a800')
             ),
-            hovertemplate='<b>X:</b> %{x:.0f}<br><b>Y:</b> %{y:.0f}<extra></extra>'
+            hovertemplate='<b>X:</b> %{x}<br><b>Y:</b> %{y}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -289,9 +324,15 @@ class ChartGenerator:
             **self.dark_theme
         )
         
-        # Format axes to show integers only
-        fig.update_xaxes(tickformat='.0f')
-        fig.update_yaxes(tickformat='.0f')
+        # Format axes to show clean numbers without unnecessary decimals
+        fig.update_xaxes(
+            tickformat='g',  # 'g' format automatically chooses best representation
+            dtick=None
+        )
+        fig.update_yaxes(
+            tickformat='g',  # 'g' format automatically chooses best representation
+            dtick=None
+        )
         
         return fig
     

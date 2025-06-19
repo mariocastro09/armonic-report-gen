@@ -211,8 +211,22 @@ class ReportGenerator:
                 height=self.standard_height,
                 margin=dict(l=50, r=20, t=50, b=40),
                 showlegend=False,
-                xaxis=dict(showgrid=True, gridcolor='#e0e0e0', color='#2c3e50'),
-                yaxis=dict(showgrid=True, gridcolor='#e0e0e0', color='#2c3e50')
+                xaxis=dict(
+                    color=text_color,
+                    gridcolor=colors['border'],
+                    linecolor=text_color,
+                    tickfont=dict(color=text_color, size=9),
+                    title_font=dict(size=10),
+                    tickformat='d'  # Use 'd' format for clean integers without .0
+                ),
+                yaxis=dict(
+                    color=text_color,
+                    gridcolor=colors['border'],
+                    linecolor=text_color,
+                    tickfont=dict(color=text_color, size=9),
+                    title_font=dict(size=10),
+                    tickformat='g'  # Use 'g' format for automatic best representation
+                ),
             )
             
             # Try conversion with different approaches
@@ -417,12 +431,49 @@ class ReportGenerator:
                     font-size: 11pt;
                     -webkit-print-color-adjust: exact;
                     print-color-adjust: exact;
+                    color-adjust: exact;
+                }}
+                
+                /* Force print colors - critical for PDF conversion */
+                @media print {{
+                    * {{
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                    }}
+                    
+                    body {{
+                        background-color: {background_color} !important;
+                        color: {text_color} !important;
+                    }}
+                    
+                    .header {{
+                        background: {colors['header_bg']} !important;
+                        color: #ffffff !important;
+                    }}
+                    
+                    .chart-container {{
+                        background: {background_color} !important;
+                        border: 1px solid {colors['border']} !important;
+                    }}
+                    
+                    .stat-card {{
+                        background: {colors['card_bg']} !important;
+                        border: 1px solid {colors['border']} !important;
+                    }}
+                    
+                    .search-container {{
+                        background: {colors['card_bg']} !important;
+                    }}
                 }}
                 
                 .container {{
                     background-color: {background_color} !important;
                     min-height: 100vh;
                     width: 100%;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                    color-adjust: exact;
                 }}
                 
                 /* Header section - stays on first page */
@@ -889,7 +940,7 @@ class ReportGenerator:
                     linecolor=text_color,
                     tickfont=dict(color=text_color, size=9),
                     title_font=dict(size=10),
-                    tickformat='.0f'  # Show integers only
+                    tickformat='d'  # Use 'd' format for clean integers without .0
                 ),
                 yaxis=dict(
                     color=text_color,
@@ -897,7 +948,7 @@ class ReportGenerator:
                     linecolor=text_color,
                     tickfont=dict(color=text_color, size=9),
                     title_font=dict(size=10),
-                    tickformat='.0f'  # Show integers only
+                    tickformat='g'  # Use 'g' format for automatic best representation
                 ),
                 legend=dict(
                     font=dict(color=text_color, size=9),
@@ -970,7 +1021,7 @@ class ReportGenerator:
                     <h3>🚀 Analizador de Espectros Armónicos</h3>
                     <p>Reporte optimizado para PDF • {total_charts} gráficos • {total_points:,} puntos de datos • {total_charts + 1} páginas totales</p>
                     <p>Para imprimir: Ctrl+P → Más configuraciones → Gráficos en color → Guardar como PDF</p>
-                    <p>© 2024 • Versión 3.1 • PDF Print Optimized</p>
+                    <p>© 2025 • Versión 3.2 • PDF Print Optimized • <a href="https://github.com/mariocastro09/" target="_blank">GitHub</a></p>
                 </div>
             </div>
             

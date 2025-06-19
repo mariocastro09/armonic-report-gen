@@ -10,6 +10,11 @@ A powerful, modern web application for analyzing harmonic spectra and waveforms 
 - **Editable session names** during creation with optional custom naming
 - **Santiago timezone support** for accurate timestamp recording
 - **Improved session persistence** with better organization
+- **⭐ Favorites system** - Mark important sessions as favorites
+- **✏️ Real-time name editing** - Edit session names after creation
+- **🔍 Advanced filtering** - Filter by favorites, search by name/filename
+- **📊 Session statistics** - Track favorites, total sessions, and metrics
+- **📋 Session duplication** - Clone existing sessions easily
 
 ### 📄 PDF-Optimized Reports
 
@@ -17,6 +22,10 @@ A powerful, modern web application for analyzing harmonic spectra and waveforms 
 - **Improved chart layout** with better margins and spacing for A4 pages
 - **Consistent theming** between main screen and session list reports
 - **Professional color schemes** optimized for printing
+- **🎨 3 Beautiful Presets** - Classic White, Executive Blue, Modern Gray themes
+- **📊 Live Chart Preview** - See exactly how your report will look before generating
+- **🖨️ Print-Optimized CSS** - Forces background colors to print properly
+- **⬇️ Enhanced Download Options** - Direct download with helpful PDF conversion tips
 
 ### 🎯 Streamlined File Support
 
@@ -116,7 +125,12 @@ The application follows a modular architecture for maintainability and extensibi
 ### 2. **Session Management**
 
 - 📚 View "Session History" to see all saved analyses
+- ⭐ **Mark favorites** for quick access to important sessions
+- ✏️ **Edit names** by clicking the edit button on any session
+- 🔍 **Search and filter** sessions by name, filename, or favorite status
+- 📊 **View statistics** including total sessions, favorites, and charts
 - 👁️ Load previous sessions without re-processing
+- 📋 **Duplicate sessions** to create variants or backups
 - 🗑️ Delete old sessions to save space
 - 📄 Generate reports from any session
 

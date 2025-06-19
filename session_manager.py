@@ -34,9 +34,17 @@ class SessionManager:
                     total_data_points INTEGER DEFAULT 0,
                     chart_types TEXT,
                     charts_data TEXT,
-                    status TEXT DEFAULT 'completed'
+                    status TEXT DEFAULT 'completed',
+                    is_favorite INTEGER DEFAULT 0
                 )
             """)
+            
+            # Add favorites column to existing databases
+            try:
+                cursor.execute("ALTER TABLE analysis_sessions ADD COLUMN is_favorite INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                # Column already exists
+                pass
             
             conn.commit()
             conn.close()
@@ -181,9 +189,9 @@ class SessionManager:
             
             cursor.execute("""
                 SELECT id, session_name, original_filename, file_size, 
-                       created_at, charts_count, total_data_points, chart_types
+                       created_at, charts_count, total_data_points, chart_types, is_favorite
                 FROM analysis_sessions 
-                ORDER BY created_at DESC
+                ORDER BY is_favorite DESC, created_at DESC
             """)
             
             sessions = []
@@ -196,7 +204,8 @@ class SessionManager:
                     'created_at': row[4],
                     'charts_count': row[5],
                     'total_data_points': row[6],
-                    'chart_types': json.loads(row[7]) if row[7] else {}
+                    'chart_types': json.loads(row[7]) if row[7] else {},
+                    'is_favorite': bool(row[8])
                 })
             
             conn.close()
@@ -254,35 +263,137 @@ class SessionManager:
             return False
     
     def get_session_stats(self) -> Dict:
-        """Get overall session statistics"""
+        """Get session statistics"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Get total sessions
+            cursor.execute("SELECT COUNT(*) FROM analysis_sessions")
+            total_sessions = cursor.fetchone()[0]
+            
+            # Get total charts
+            cursor.execute("SELECT SUM(charts_count) FROM analysis_sessions")
+            total_charts = cursor.fetchone()[0] or 0
+            
+            # Get total data points
+            cursor.execute("SELECT SUM(total_data_points) FROM analysis_sessions")
+            total_data_points = cursor.fetchone()[0] or 0
+            
+            # Get average charts per session
+            avg_charts = total_charts / total_sessions if total_sessions > 0 else 0
+            
+            # Get favorites count
+            cursor.execute("SELECT COUNT(*) FROM analysis_sessions WHERE is_favorite = 1")
+            favorites_count = cursor.fetchone()[0]
+            
+            conn.close()
+            
+            return {
+                'total_sessions': total_sessions,
+                'total_charts': total_charts,
+                'total_data_points': total_data_points,
+                'avg_charts_per_session': round(avg_charts, 1),
+                'favorites_count': favorites_count
+            }
+            
+        except Exception as e:
+            st.error(f"Error getting session statistics: {e}")
+            return {
+                'total_sessions': 0,
+                'total_charts': 0,
+                'total_data_points': 0,
+                'avg_charts_per_session': 0,
+                'favorites_count': 0
+            }
+    
+    def update_session_name(self, session_id: str, new_name: str) -> bool:
+        """Update session name"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT 
-                    COUNT(*) as total_sessions,
-                    SUM(charts_count) as total_charts,
-                    SUM(total_data_points) as total_data_points,
-                    AVG(charts_count) as avg_charts_per_session
-                FROM analysis_sessions
-            """)
+                UPDATE analysis_sessions 
+                SET session_name = ? 
+                WHERE id = ?
+            """, (new_name, session_id))
             
-            row = cursor.fetchone()
+            success = cursor.rowcount > 0
+            conn.commit()
             conn.close()
             
-            return {
-                'total_sessions': row[0] or 0,
-                'total_charts': row[1] or 0,
-                'total_data_points': row[2] or 0,
-                'avg_charts_per_session': round(row[3] or 0, 1)
-            }
+            return success
             
         except Exception as e:
-            st.error(f"Error getting session stats: {e}")
-            return {
-                'total_sessions': 0,
-                'total_charts': 0,
-                'total_data_points': 0,
-                'avg_charts_per_session': 0
-            } 
+            st.error(f"Error updating session name: {e}")
+            return False
+    
+    def toggle_favorite(self, session_id: str) -> bool:
+        """Toggle favorite status of a session"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Get current favorite status
+            cursor.execute("SELECT is_favorite FROM analysis_sessions WHERE id = ?", (session_id,))
+            result = cursor.fetchone()
+            
+            if result is None:
+                conn.close()
+                return False
+            
+            current_status = bool(result[0])
+            new_status = not current_status
+            
+            # Update favorite status
+            cursor.execute("""
+                UPDATE analysis_sessions 
+                SET is_favorite = ? 
+                WHERE id = ?
+            """, (int(new_status), session_id))
+            
+            success = cursor.rowcount > 0
+            conn.commit()
+            conn.close()
+            
+            return success
+            
+        except Exception as e:
+            st.error(f"Error toggling favorite: {e}")
+            return False
+    
+    def get_favorite_sessions(self) -> List[Dict]:
+        """Get only favorite sessions"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, session_name, original_filename, file_size, 
+                       created_at, charts_count, total_data_points, chart_types, is_favorite
+                FROM analysis_sessions 
+                WHERE is_favorite = 1
+                ORDER BY created_at DESC
+            """)
+            
+            sessions = []
+            for row in cursor.fetchall():
+                sessions.append({
+                    'id': row[0],
+                    'session_name': row[1],
+                    'original_filename': row[2],
+                    'file_size': row[3],
+                    'created_at': row[4],
+                    'charts_count': row[5],
+                    'total_data_points': row[6],
+                    'chart_types': json.loads(row[7]) if row[7] else {},
+                    'is_favorite': bool(row[8])
+                })
+            
+            conn.close()
+            return sessions
+            
+        except Exception as e:
+            st.error(f"Error getting favorite sessions: {e}")
+            return [] 
